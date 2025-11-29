@@ -46,18 +46,38 @@ function App() {
           </div>
         </section>
 
-        {/* Section 2: About & Summary */}
-        <section className="min-h-screen w-full flex items-center justify-center p-6 max-w-4xl">
-          <div className="bg-black/70 backdrop-blur-sm p-8 md:p-12 rounded-lg border-l-4 border-ud-red shadow-[0_0_30px_rgba(0,0,0,0.8)] transform transition-all duration-700 translate-y-0 opacity-100">
-             <h3 className="font-serif text-4xl text-ud-red mb-6 border-b border-gray-800 pb-2">01. THE PROFILE</h3>
-             <p className="text-lg md:text-xl leading-relaxed text-gray-300">
-               {PORTFOLIO_DATA.summary}
-             </p>
-             <div className="mt-8 flex flex-wrap gap-4 text-sm text-gray-400">
-                <span className="flex items-center gap-2"><MapPin className="text-ud-red" size={16}/> {PORTFOLIO_DATA.contact.address}</span>
-                <span className="flex items-center gap-2"><Mail className="text-ud-red" size={16}/> {PORTFOLIO_DATA.contact.email}</span>
-                <span className="flex items-center gap-2"><Phone className="text-ud-red" size={16}/> {PORTFOLIO_DATA.contact.phone}</span>
-             </div>
+        {/* Section 2: About & Summary (With Profile Image) */}
+        <section className="min-h-screen w-full flex items-center justify-center p-6 max-w-6xl">
+          <div className="flex flex-col md:flex-row gap-12 items-center bg-black/70 backdrop-blur-sm p-8 md:p-12 rounded-lg border-l-4 border-ud-red shadow-[0_0_30px_rgba(0,0,0,0.8)] transform transition-all duration-700 w-full">
+            
+            {/* Profile Image */}
+            <div className="relative w-full md:w-80 shrink-0 group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-ud-red to-ud-dark-red rounded-lg blur opacity-40 group-hover:opacity-75 transition duration-500"></div>
+              <div className="relative aspect-[3/4] rounded-lg overflow-hidden border border-gray-800 bg-black">
+                <img 
+                  src="https://i.ibb.co.com/RT14hM1t/Stranger-Things-Vecna-PNG.png" 
+                  alt="Vecna (Henry Creel)" 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter sepia-[0.5] group-hover:sepia-0" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                <div className="absolute bottom-4 left-4 font-serif text-xl text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                  001
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1">
+               <h3 className="font-serif text-4xl text-ud-red mb-6 border-b border-gray-800 pb-2">01. THE PROFILE</h3>
+               <p className="text-lg md:text-xl leading-relaxed text-gray-300">
+                 {PORTFOLIO_DATA.summary}
+               </p>
+               <div className="mt-8 flex flex-wrap gap-6 text-sm text-gray-400 font-mono tracking-wide">
+                  <span className="flex items-center gap-2 hover:text-ud-red transition-colors"><MapPin className="text-ud-red" size={16}/> {PORTFOLIO_DATA.contact.address}</span>
+                  <span className="flex items-center gap-2 hover:text-ud-red transition-colors"><Mail className="text-ud-red" size={16}/> {PORTFOLIO_DATA.contact.email}</span>
+                  <span className="flex items-center gap-2 hover:text-ud-red transition-colors"><Phone className="text-ud-red" size={16}/> {PORTFOLIO_DATA.contact.phone}</span>
+               </div>
+            </div>
           </div>
         </section>
 
@@ -123,6 +143,8 @@ function App() {
            </div>
         </section>
 
+     
+
         {/* Section 7: Contact */}
         <section className="h-[50vh] w-full flex flex-col items-center justify-center p-6 bg-gradient-to-t from-ud-black to-transparent">
           <h3 className="font-serif text-5xl text-white mb-8">MAKE CONTACT</h3>
@@ -147,7 +169,7 @@ function App() {
             </a>
           </div>
           <footer className="absolute bottom-4 text-xs text-gray-600 font-mono">
-             © {new Date().getFullYear()} HASAN HAFIZUR RAHMAN. ALL RIGHTS RESERVED.
+             © {new Date().getFullYear()} VECNA. ALL RIGHTS RESERVED.
           </footer>
         </section>
 
