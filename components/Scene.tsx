@@ -54,8 +54,6 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
     // Handle Autoplay Policy
     const initAudio = () => {
       ambienceSound.play().catch(() => {});
-      // We don't remove listeners immediately to ensure we catch interaction if the first one failed or wasn't a "user activation"
-      // But for simplicity in this loop, we assume one click is enough.
       window.removeEventListener('click', initAudio);
       window.removeEventListener('scroll', initAudio);
     };
@@ -81,18 +79,19 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
     scene.add(stormGroup);
 
     // Thunder Light (Global illumination from above)
-    const thunderLight = new THREE.PointLight(0xff0033, 0, 1000, 2);
-    thunderLight.position.set(0, 80, -40);
+    const thunderLight = new THREE.PointLight(0xff0033, 0, 1200, 2);
+    thunderLight.position.set(0, 100, -50);
     scene.add(thunderLight);
 
-    // Cloud Texture
+    // Cloud Texture - Dark, smokey, amorphous
     const cloudCanvas = document.createElement('canvas');
     cloudCanvas.width = 128; cloudCanvas.height = 128;
     const cCtx = cloudCanvas.getContext('2d');
     if (cCtx) {
         const g = cCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
-        g.addColorStop(0, 'rgba(15, 10, 12, 0.9)'); 
-        g.addColorStop(0.5, 'rgba(8, 0, 0, 0.5)'); 
+        g.addColorStop(0, 'rgba(15, 5, 5, 0.95)'); 
+        g.addColorStop(0.4, 'rgba(10, 0, 0, 0.6)'); 
+        g.addColorStop(0.8, 'rgba(5, 0, 0, 0.2)'); 
         g.addColorStop(1, 'rgba(0, 0, 0, 0)'); 
         cCtx.fillStyle = g;
         cCtx.fillRect(0, 0, 128, 128);
@@ -102,26 +101,26 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
         map: cloudTexture, 
         transparent: true, 
         opacity: 0.9,
-        color: 0x050101, // Very dark, almost black with slight red tint
+        color: 0x110000, // Deep dark red/black
         blending: THREE.NormalBlending 
     });
 
     const stormParticles: THREE.Sprite[] = [];
     // Create massive amorphous cloud formation overhead (The Mind Flayer Shadow)
-    for(let i=0; i<200; i++) {
+    for(let i=0; i<300; i++) {
         const sprite = new THREE.Sprite(cloudMat.clone());
         
         // Spread widely across the "sky"
-        const x = (Math.random() - 0.5) * 250; 
-        const y = 40 + Math.random() * 60; // High up
-        const z = -200 + Math.random() * 200; // Spanning deep back to near front
+        const x = (Math.random() - 0.5) * 400; 
+        const y = 60 + Math.random() * 80; // High up
+        const z = -250 + Math.random() * 250; // Spanning deep back
         
         sprite.position.set(x, y, z);
         
-        const s = 60 + Math.random() * 80; // Large billowy shapes
+        const s = 80 + Math.random() * 100; // Large billowy shapes
         sprite.scale.set(s, s, 1);
         sprite.material.rotation = Math.random() * Math.PI;
-        sprite.material.opacity = 0.5 + Math.random() * 0.5;
+        sprite.material.opacity = 0.4 + Math.random() * 0.6;
         
         stormGroup.add(sprite);
         stormParticles.push(sprite);
@@ -684,27 +683,26 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       redLight.intensity = heartbeat + flicker;
       redLight.position.x = Math.sin(time) * 5;
 
-      // 1b. Thunder Logic
-      if (Math.random() < 0.005 && thunderTimer <= 0) {
-          thunderTimer = 25; // Frames of thunder
+      // 1b. Thunder Logic - Subtle, Intermittent, Flickering
+      if (Math.random() < 0.008 && thunderTimer <= 0) {
+          thunderTimer = Math.floor(Math.random() * 30 + 10); // Random duration
       }
       if (thunderTimer > 0) {
-          // Thunder intensity flickers
-          thunderLight.intensity = (Math.random() * 80) + 20;
+          // Flickering intensity
+          thunderLight.intensity = Math.random() > 0.5 ? (30 + Math.random() * 50) : (5 + Math.random() * 10);
           thunderTimer--;
       } else {
           thunderLight.intensity = 0;
       }
 
       // 2. Storm & Mist Animation
-      // Slowly rotate the entire sky mass? No, just turbulence to feel amorphous
       stormParticles.forEach((p, idx) => {
            // Internal turbulence
            p.material.rotation += 0.001 * (idx % 2 === 0 ? 1 : -1);
            // Slight drift
            p.position.x += Math.sin(time * 0.1 + idx) * 0.02;
            // Pulsing opacity for shadow effect
-           p.material.opacity = 0.5 + Math.sin(time * 0.5 + idx) * 0.2;
+           p.material.opacity = 0.4 + Math.sin(time * 0.5 + idx) * 0.2;
       });
 
       mistParticles.forEach(p => {
