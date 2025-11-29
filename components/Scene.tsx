@@ -16,6 +16,10 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
   const lastScrollRef = useRef(scrollProgress);
   const stalkFactorRef = useRef(0); // 0 = moving/passive, 1 = stalking/aggressive
 
+  // Track audio triggers
+  const hasRoared1 = useRef(false);
+  const hasRoared2 = useRef(false);
+
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -41,15 +45,17 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       new Audio('https://actions.google.com/sounds/v1/horror/monster_alien_growl_pained.ogg'),
       new Audio('https://actions.google.com/sounds/v1/horror/aggressive_beast_growl.ogg')
     ];
-    growlSounds.forEach(s => s.volume = 0.4);
+    growlSounds.forEach(s => s.volume = 0.5);
 
     const ambienceSound = new Audio('https://actions.google.com/sounds/v1/horror/horror_ambience.ogg');
-    ambienceSound.volume = 0.2;
+    ambienceSound.volume = 0.3;
     ambienceSound.loop = true;
 
     // Handle Autoplay Policy
     const initAudio = () => {
       ambienceSound.play().catch(() => {});
+      // We don't remove listeners immediately to ensure we catch interaction if the first one failed or wasn't a "user activation"
+      // But for simplicity in this loop, we assume one click is enough.
       window.removeEventListener('click', initAudio);
       window.removeEventListener('scroll', initAudio);
     };
@@ -816,13 +822,39 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
           );
       });
 
-      // 5. Random Growls
-      if (Math.random() < 0.003) { 
+      // 5. Audio Triggers (Proximity & Random)
+      
+      // Calculate distances
+      const dist1 = Math.abs(camera.position.z - demo1.group.position.z);
+      const dist2 = Math.abs(camera.position.z - demo2.group.position.z);
+
+      // Trigger 1: Close to Demo 1 (pained/alert)
+      if (dist1 < 15 && !hasRoared1.current) {
+          growlSounds[0].currentTime = 0;
+          growlSounds[0].play().catch(() => {});
+          redLight.intensity = 5;
+          hasRoared1.current = true;
+      } else if (dist1 > 30) {
+          // Reset when moved away
+          hasRoared1.current = false;
+      }
+
+      // Trigger 2: Close to Demo 2 (aggressive)
+      if (dist2 < 20 && !hasRoared2.current) {
+          growlSounds[1].currentTime = 0;
+          growlSounds[1].play().catch(() => {});
+          redLight.intensity = 8;
+          hasRoared2.current = true;
+      } else if (dist2 > 40) {
+          hasRoared2.current = false;
+      }
+
+      // Random ambient growls (lower chance than before to avoid clutter)
+      if (Math.random() < 0.001) { 
         const s = growlSounds[Math.floor(Math.random() * growlSounds.length)];
         if (s.paused) {
            s.playbackRate = 0.8 + Math.random() * 0.4;
            s.play().catch(() => {});
-           redLight.intensity = 8;
         }
       }
 
