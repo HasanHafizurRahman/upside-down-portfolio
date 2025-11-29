@@ -5,7 +5,7 @@ import { ScrollProps } from '../types';
 export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  
+
   // Track scroll for animation loop usage
   const scrollRef = useRef(scrollProgress);
   useEffect(() => {
@@ -53,7 +53,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
 
     // Handle Autoplay Policy
     const initAudio = () => {
-      ambienceSound.play().catch(() => {});
+      ambienceSound.play().catch(() => { });
       window.removeEventListener('click', initAudio);
       window.removeEventListener('scroll', initAudio);
     };
@@ -62,7 +62,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
 
 
     // --- Lights ---
-    const ambientLight = new THREE.AmbientLight(0x4a5a6a, 2.5); 
+    const ambientLight = new THREE.AmbientLight(0x4a5a6a, 2.5);
     scene.add(ambientLight);
 
     const moonLight = new THREE.DirectionalLight(0x8899ff, 1.5);
@@ -78,8 +78,8 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
     const stormGroup = new THREE.Group();
     scene.add(stormGroup);
 
-    // Thunder Light (Global illumination from above)
-    const thunderLight = new THREE.PointLight(0xff0033, 0, 1200, 2);
+    // Thunder Light (Global illumination from above - dynamic position)
+    const thunderLight = new THREE.PointLight(0xff0033, 0, 1500, 2);
     thunderLight.position.set(0, 100, -50);
     scene.add(thunderLight);
 
@@ -88,123 +88,135 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
     cloudCanvas.width = 128; cloudCanvas.height = 128;
     const cCtx = cloudCanvas.getContext('2d');
     if (cCtx) {
-        const g = cCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
-        g.addColorStop(0, 'rgba(15, 5, 5, 0.95)'); 
-        g.addColorStop(0.4, 'rgba(10, 0, 0, 0.6)'); 
-        g.addColorStop(0.8, 'rgba(5, 0, 0, 0.2)'); 
-        g.addColorStop(1, 'rgba(0, 0, 0, 0)'); 
-        cCtx.fillStyle = g;
-        cCtx.fillRect(0, 0, 128, 128);
+      const g = cCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.addColorStop(0, 'rgba(20, 0, 0, 0.9)'); // Redder core for ominous feel
+      g.addColorStop(0.4, 'rgba(10, 0, 0, 0.5)');
+      g.addColorStop(0.8, 'rgba(5, 0, 0, 0.1)');
+      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      cCtx.fillStyle = g;
+      cCtx.fillRect(0, 0, 128, 128);
     }
     const cloudTexture = new THREE.CanvasTexture(cloudCanvas);
-    const cloudMat = new THREE.SpriteMaterial({ 
-        map: cloudTexture, 
-        transparent: true, 
-        opacity: 0.9,
-        color: 0x110000, // Deep dark red/black
-        blending: THREE.NormalBlending 
+    const cloudMat = new THREE.SpriteMaterial({
+      map: cloudTexture,
+      transparent: true,
+      opacity: 0.8,
+      color: 0x150505, // Deep dark red/black
+      blending: THREE.NormalBlending,
+      depthWrite: false
     });
 
     const stormParticles: THREE.Sprite[] = [];
     // Create massive amorphous cloud formation overhead (The Mind Flayer Shadow)
-    for(let i=0; i<300; i++) {
-        const sprite = new THREE.Sprite(cloudMat.clone());
-        
-        // Spread widely across the "sky"
-        const x = (Math.random() - 0.5) * 400; 
-        const y = 60 + Math.random() * 80; // High up
-        const z = -250 + Math.random() * 250; // Spanning deep back
-        
-        sprite.position.set(x, y, z);
-        
-        const s = 80 + Math.random() * 100; // Large billowy shapes
-        sprite.scale.set(s, s, 1);
-        sprite.material.rotation = Math.random() * Math.PI;
-        sprite.material.opacity = 0.4 + Math.random() * 0.6;
-        
-        stormGroup.add(sprite);
-        stormParticles.push(sprite);
+    for (let i = 0; i < 400; i++) {
+      const sprite = new THREE.Sprite(cloudMat.clone());
+
+      // Spread widely across the "sky"
+      const x = (Math.random() - 0.5) * 500;
+      const y = 50 + Math.random() * 100; // High up
+      const z = -200 + Math.random() * 200; // Spanning deep back
+
+      sprite.position.set(x, y, z);
+
+      const s = 120 + Math.random() * 150; // Larger billowy shapes for amorphous look
+      sprite.scale.set(s, s, 1);
+      sprite.material.rotation = Math.random() * Math.PI;
+      sprite.material.opacity = 0.3 + Math.random() * 0.5;
+
+      stormGroup.add(sprite);
+      stormParticles.push(sprite);
     }
 
 
     // --- Procedural Mist / Fog Banks (Foreground) ---
     const mistParticles: { sprite: THREE.Sprite, speedZ: number, swaySpeed: number, swayOffset: number }[] = [];
     const mistTextureCanvas = document.createElement('canvas');
-    mistTextureCanvas.width = 128; 
+    mistTextureCanvas.width = 128;
     mistTextureCanvas.height = 128;
     const ctx = mistTextureCanvas.getContext('2d');
     if (ctx) {
-        const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-        g.addColorStop(0, 'rgba(50, 60, 70, 0.2)'); 
-        g.addColorStop(0.5, 'rgba(30, 35, 40, 0.05)'); 
-        g.addColorStop(1, 'rgba(0, 0, 0, 0)'); 
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, 128, 128);
+      const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.addColorStop(0, 'rgba(50, 60, 70, 0.2)');
+      g.addColorStop(0.5, 'rgba(30, 35, 40, 0.05)');
+      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 128);
     }
     const mistTexture = new THREE.CanvasTexture(mistTextureCanvas);
 
-    const baseMistMaterial = new THREE.SpriteMaterial({ 
-        map: mistTexture, 
-        transparent: true, 
-        opacity: 0.6, 
-        blending: THREE.NormalBlending, 
-        depthWrite: false,
+    const baseMistMaterial = new THREE.SpriteMaterial({
+      map: mistTexture,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.NormalBlending,
+      depthWrite: false,
     });
 
     const mistGroup = new THREE.Group();
     scene.add(mistGroup);
 
     for (let i = 0; i < 50; i++) {
-        const material = baseMistMaterial.clone();
-        material.rotation = Math.random() * Math.PI * 2;
-        
-        const sprite = new THREE.Sprite(material);
-        sprite.position.set(
-            (Math.random() - 0.5) * 60, 
-            (Math.random() - 0.5) * 20 - 5, 
-            (Math.random() - 0.5) * 120 - 30 
-        );
-        
-        const scale = 15 + Math.random() * 25;
-        sprite.scale.set(scale, scale, 1);
-        
-        mistGroup.add(sprite);
-        mistParticles.push({
-            sprite,
-            speedZ: 0.02 + Math.random() * 0.05, 
-            swaySpeed: 0.1 + Math.random() * 0.2,
-            swayOffset: Math.random() * Math.PI * 2
-        });
+      const material = baseMistMaterial.clone();
+      material.rotation = Math.random() * Math.PI * 2;
+
+      const sprite = new THREE.Sprite(material);
+      sprite.position.set(
+        (Math.random() - 0.5) * 60,
+        (Math.random() - 0.5) * 20 - 5,
+        (Math.random() - 0.5) * 120 - 30
+      );
+
+      const scale = 15 + Math.random() * 25;
+      sprite.scale.set(scale, scale, 1);
+
+      mistGroup.add(sprite);
+      mistParticles.push({
+        sprite,
+        speedZ: 0.02 + Math.random() * 0.05,
+        swaySpeed: 0.1 + Math.random() * 0.2,
+        swayOffset: Math.random() * Math.PI * 2
+      });
     }
 
     // --- Helpers for Procedural Monsters ---
-    
-    // Create Enhanced Demogorgon
+
+    // --- Create Enhanced Demogorgon (REPLACEMENT) ---
     const createDemogorgon = (scale = 1) => {
       const group = new THREE.Group();
-      
-      // Darker skin color
-      const skinMat = new THREE.MeshStandardMaterial({ 
-        color: 0x151515, // Almost black
+
+      // --- Split materials: body vs head ---
+      // Body: much darker, semi-transparent so it's wrapped in shadow
+      const skinMatBody = new THREE.MeshStandardMaterial({
+        color: 0x050507, // extremely dark
+        roughness: 0.7,
+        metalness: 0.08,
+        transparent: true,
+        opacity: 0.22, // faint body
+        depthWrite: false // avoid z-fighting artifacts with transparency
+      });
+
+      // Head: full opaque material (keep head as-is / unchanged)
+      const skinMatHead = new THREE.MeshStandardMaterial({
+        color: 0x151515,
         roughness: 0.6,
         metalness: 0.2
       });
-      
-      const insideMat = new THREE.MeshStandardMaterial({ 
-        color: 0x660000, 
-        roughness: 0.2, 
-        emissive: 0x330000, 
+
+      const insideMat = new THREE.MeshStandardMaterial({
+        color: 0x660000,
+        roughness: 0.2,
+        emissive: 0x330000,
         emissiveIntensity: 0.3,
         side: THREE.DoubleSide
       });
 
-      const teethMat = new THREE.MeshStandardMaterial({ 
-        color: 0xcccccc, 
+      const teethMat = new THREE.MeshStandardMaterial({
+        color: 0xcccccc,
         roughness: 0.4,
         metalness: 0.1
       });
 
-      // Vein Material
+      // Vein Material (can remain vibrant to peek through shadow)
       const veinMat = new THREE.MeshStandardMaterial({
         color: 0x880000,
         emissive: 0x660000,
@@ -214,155 +226,133 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
 
       // Wrapping Vine Material - Dark and Constricting
       const wrapVineMat = new THREE.MeshStandardMaterial({
-          color: 0x030303,
-          roughness: 0.9,
-          metalness: 0.1,
+        color: 0x030303,
+        roughness: 0.9,
+        metalness: 0.1,
       });
 
       // Helper to add procedural surface veins
-      const createVeins = (parent: THREE.Group | THREE.Mesh, count: number, size: {r: number, l: number}) => {
-          for(let i=0; i<count; i++) {
-             const curvePts = [];
-             // Start random spot on surface approx
-             const angle = Math.random() * Math.PI * 2;
-             const h = (Math.random() - 0.5) * size.l;
-             const r = size.r;
-             
-             let curr = new THREE.Vector3(Math.cos(angle)*r, h, Math.sin(angle)*r);
-             curvePts.push(curr.clone());
+      const createVeins = (parent: THREE.Group | THREE.Mesh, count: number, size: { r: number, l: number }) => {
+        for (let i = 0; i < count; i++) {
+          const curvePts = [];
+          const angle = Math.random() * Math.PI * 2;
+          const h = (Math.random() - 0.5) * size.l;
+          const r = size.r;
 
-             // Wiggle
-             for(let j=0; j<5; j++) {
-                 curr.y += (Math.random() - 0.5) * (size.l * 0.3);
-                 curr.x += (Math.random() - 0.5) * (size.r * 0.5);
-                 curr.z += (Math.random() - 0.5) * (size.r * 0.5);
-                 curvePts.push(curr.clone());
-             }
-
-             const curve = new THREE.CatmullRomCurve3(curvePts);
-             const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 5, 0.015 * scale, 3, false), veinMat);
-             parent.add(tube);
+          let curr = new THREE.Vector3(Math.cos(angle) * r, h, Math.sin(angle) * r);
+          curvePts.push(curr.clone());
+          for (let j = 0; j < 5; j++) {
+            curr.y += (Math.random() - 0.5) * (size.l * 0.3);
+            curr.x += (Math.random() - 0.5) * (size.r * 0.5);
+            curr.z += (Math.random() - 0.5) * (size.r * 0.5);
+            curvePts.push(curr.clone());
           }
+
+          const curve = new THREE.CatmullRomCurve3(curvePts);
+          const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 5, 0.015 * scale, 3, false), veinMat);
+          parent.add(tube);
+        }
       };
 
       // Helper to wrap vines AROUND a limb (Constricting)
       const wrapVine = (parent: THREE.Mesh | THREE.Group, length: number, radius: number, turns: number = 2) => {
-          const points = [];
-          const rBase = radius; // Tight fit
-          const loops = 40;
-          for(let i=0; i<=loops; i++) {
-              const t = i/loops;
-              const angle = t * Math.PI * 2 * turns;
-              const y = (t - 0.5) * length;
-              // Irregular radius for organic look, occasionally dipping in (constricting)
-              const r = rBase + (Math.sin(t * 12) * 0.015 * scale) + 0.01 * scale;
-              points.push(new THREE.Vector3(Math.cos(angle)*r, y, Math.sin(angle)*r));
-          }
-          const curve = new THREE.CatmullRomCurve3(points);
-          const tube = new THREE.Mesh(
-              new THREE.TubeGeometry(curve, loops, 0.035 * scale, 5, false), 
-              wrapVineMat
-          );
-          parent.add(tube);
+        const points = [];
+        const rBase = radius;
+        const loops = 40;
+        for (let i = 0; i <= loops; i++) {
+          const t = i / loops;
+          const angle = t * Math.PI * 2 * turns;
+          const y = (t - 0.5) * length;
+          const r = rBase + (Math.sin(t * 12) * 0.015 * scale) + 0.01 * scale;
+          points.push(new THREE.Vector3(Math.cos(angle) * r, y, Math.sin(angle) * r));
+        }
+        const curve = new THREE.CatmullRomCurve3(points);
+        const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, loops, 0.035 * scale, 5, false), wrapVineMat);
+        parent.add(tube);
       };
 
-      // --- Body Construction ---
+      // --- Body Construction (use skinMatBody for faint body) ---
 
       // Pelvis Area
-      const pelvis = new THREE.Mesh(new THREE.DodecahedronGeometry(0.35 * scale), skinMat);
+      const pelvis = new THREE.Mesh(new THREE.DodecahedronGeometry(0.35 * scale), skinMatBody);
       pelvis.position.y = 1.8 * scale;
       group.add(pelvis);
-      createVeins(pelvis, 3, {r: 0.35*scale, l: 0.3*scale});
-      
+      createVeins(pelvis, 3, { r: 0.35 * scale, l: 0.3 * scale });
+
       // Wrap Pelvis
       const pelvisVine = new THREE.Group();
       pelvis.add(pelvisVine);
-      wrapVine(pelvisVine, 0.5*scale, 0.38*scale, 2);
+      wrapVine(pelvisVine, 0.5 * scale, 0.38 * scale, 2);
 
       // Spine & Ribcage
       const spineGroup = new THREE.Group();
       spineGroup.position.y = 2.2 * scale;
       group.add(spineGroup);
 
-      // Backbone
-      const spine = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.12 * scale, 0.15 * scale, 1.2 * scale, 8), 
-          skinMat
-      );
+      const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.12 * scale, 0.15 * scale, 1.2 * scale, 8), skinMatBody);
       spine.position.y = 0.5 * scale;
       spineGroup.add(spine);
-      // Wrap spine
       wrapVine(spine, 1.2 * scale, 0.15 * scale, 3);
 
-      // Ribs
-      for(let i = 0; i < 4; i++) {
+      for (let i = 0; i < 4; i++) {
         const ribSize = (0.28 - (i * 0.02)) * scale;
-        const rib = new THREE.Mesh(
-            new THREE.TorusGeometry(ribSize, 0.04 * scale, 8, 16, Math.PI * 1.5),
-            skinMat
-        );
+        const rib = new THREE.Mesh(new THREE.TorusGeometry(ribSize, 0.04 * scale, 8, 16, Math.PI * 1.5), skinMatBody);
         rib.rotation.x = Math.PI / 2;
-        rib.rotation.z = Math.PI / 1.35; 
+        rib.rotation.z = Math.PI / 1.35;
         rib.position.y = (0.3 + i * 0.2) * scale;
         spineGroup.add(rib);
       }
-      
-      // Veins on Ribcage
-      createVeins(spineGroup, 4, {r: 0.25*scale, l: 1*scale});
+      createVeins(spineGroup, 4, { r: 0.25 * scale, l: 1 * scale });
 
-      // Sternum
-      const chest = new THREE.Mesh(new THREE.BoxGeometry(0.25 * scale, 0.4 * scale, 0.1 * scale), skinMat);
+      const chest = new THREE.Mesh(new THREE.BoxGeometry(0.25 * scale, 0.4 * scale, 0.1 * scale), skinMatBody);
       chest.position.set(0, 2.9 * scale, 0.15 * scale);
       chest.rotation.x = -0.2;
       group.add(chest);
-      
-      // Wrap Chest
-      const chestVine = new THREE.Group();
-      chestVine.rotation.x = 0.2; // Counter chest rotation for vertical wrap
-      chest.add(chestVine);
-      wrapVine(chestVine, 0.5*scale, 0.2*scale, 2);
 
-      // Back Spikes
+      const chestVine = new THREE.Group();
+      chestVine.rotation.x = 0.2;
+      chest.add(chestVine);
+      wrapVine(chestVine, 0.5 * scale, 0.2 * scale, 2);
+
       const spikeGeo = new THREE.ConeGeometry(0.05 * scale, 0.3 * scale, 4);
-      for(let i = 0; i < 3; i++) {
-          const spike = new THREE.Mesh(spikeGeo, skinMat);
-          spike.position.set(0, (2.6 + i * 0.3) * scale, -0.2 * scale);
-          spike.rotation.x = -Math.PI / 4;
-          group.add(spike);
+      for (let i = 0; i < 3; i++) {
+        const spike = new THREE.Mesh(spikeGeo, skinMatBody);
+        spike.position.set(0, (2.6 + i * 0.3) * scale, -0.2 * scale);
+        spike.rotation.x = -Math.PI / 4;
+        group.add(spike);
       }
 
-      // --- Head (NO VINES - EXPLICITLY EXCLUDED) ---
+      // --- Head (KEEP OPAQUE / UNCHANGED) ---
       const headGroup = new THREE.Group();
-      headGroup.position.y = 3.5 * scale; 
+      headGroup.position.y = 3.5 * scale;
       group.add(headGroup);
 
-      // Thick Neck
-      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.14*scale, 0.16*scale, 0.4*scale, 8), skinMat);
-      neck.position.y = -0.2*scale;
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.14 * scale, 0.16 * scale, 0.4 * scale, 8), skinMatHead);
+      neck.position.y = -0.2 * scale;
       headGroup.add(neck);
 
-      // Face Petals
       const petals: THREE.Object3D[] = [];
-      for(let i = 0; i < 5; i++) {
+      for (let i = 0; i < 5; i++) {
         const petalPivot = new THREE.Group();
-        
+
         const pGeo = new THREE.ConeGeometry(0.18 * scale, 0.95 * scale, 5);
-        pGeo.translate(0, 0.45 * scale, 0); 
+        pGeo.translate(0, 0.45 * scale, 0);
         const pMesh = new THREE.Mesh(pGeo, insideMat);
         pMesh.scale.z = 0.15;
-        
-        const bump = new THREE.Mesh(new THREE.BoxGeometry(0.1*scale, 0.4*scale, 0.05*scale), skinMat);
-        bump.position.set(0, 0.4*scale, -0.05*scale);
+
+        // bump uses head material so it remains visible
+        const bump = new THREE.Mesh(new THREE.BoxGeometry(0.1 * scale, 0.4 * scale, 0.05 * scale), skinMatHead);
+        bump.position.set(0, 0.4 * scale, -0.05 * scale);
         pMesh.add(bump);
 
-        for(let t=0; t<7; t++) {
-           const toothSize = (0.02 + Math.random() * 0.015) * scale;
-           const tooth = new THREE.Mesh(new THREE.ConeGeometry(toothSize, toothSize * 4, 3), teethMat);
-           tooth.position.y = (0.15 + t * 0.12) * scale;
-           tooth.position.z = 0.04 * scale;
-           tooth.position.x = (Math.random() - 0.5) * 0.05 * scale;
-           tooth.rotation.x = Math.PI / 3;
-           pMesh.add(tooth);
+        for (let t = 0; t < 7; t++) {
+          const toothSize = (0.02 + Math.random() * 0.015) * scale;
+          const tooth = new THREE.Mesh(new THREE.ConeGeometry(toothSize, toothSize * 4, 3), teethMat);
+          tooth.position.y = (0.15 + t * 0.12) * scale;
+          tooth.position.z = 0.04 * scale;
+          tooth.position.x = (Math.random() - 0.5) * 0.05 * scale;
+          tooth.rotation.x = Math.PI / 3;
+          pMesh.add(tooth);
         }
 
         petalPivot.add(pMesh);
@@ -380,95 +370,93 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       const maw = new THREE.Mesh(new THREE.SphereGeometry(0.14 * scale), new THREE.MeshStandardMaterial({ color: 0x110000, roughness: 0.1 }));
       headGroup.add(maw);
 
-      // --- Arms ---
+      // --- Arms (use skinMatBody so silhouette is faint) ---
       const createLimb = (isLeft: boolean) => {
-          const limbRoot = new THREE.Group();
-          const dir = isLeft ? -1 : 1;
-          
-          limbRoot.position.set(dir * 0.45 * scale, 3.2 * scale, 0);
+        const limbRoot = new THREE.Group();
+        const dir = isLeft ? -1 : 1;
 
-          const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.18 * scale), skinMat);
-          limbRoot.add(shoulder);
-          
-          const sSpike = new THREE.Mesh(new THREE.ConeGeometry(0.04*scale, 0.2*scale, 4), skinMat);
-          sSpike.position.set(0, 0.1*scale, 0);
-          sSpike.rotation.z = dir * -0.5;
-          shoulder.add(sSpike);
+        limbRoot.position.set(dir * 0.45 * scale, 3.2 * scale, 0);
 
-          const upperArmGroup = new THREE.Group(); 
-          limbRoot.add(upperArmGroup);
-          
-          const upperArmGeo = new THREE.CylinderGeometry(0.1*scale, 0.08*scale, 1.2*scale, 6);
-          upperArmGeo.translate(0, -0.6*scale, 0);
-          const upperArm = new THREE.Mesh(upperArmGeo, skinMat);
-          createVeins(upperArm, 2, {r: 0.1*scale, l: 1*scale}); // Veins
-          
-          // Wrap Vine on Upper Arm
-          const vineAnchorUpper = new THREE.Group();
-          vineAnchorUpper.position.y = -0.6 * scale;
-          upperArmGroup.add(vineAnchorUpper);
-          wrapVine(vineAnchorUpper, 1.0 * scale, 0.1 * scale, 3);
+        const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.18 * scale), skinMatBody);
+        limbRoot.add(shoulder);
 
-          const bicep = new THREE.Mesh(new THREE.SphereGeometry(0.12*scale), skinMat);
-          bicep.scale.y = 1.5;
-          bicep.position.set(0, -0.5*scale, 0.02*scale);
-          upperArm.add(bicep);
-          
-          upperArmGroup.add(upperArm);
+        const sSpike = new THREE.Mesh(new THREE.ConeGeometry(0.04 * scale, 0.2 * scale, 4), skinMatBody);
+        sSpike.position.set(0, 0.1 * scale, 0);
+        sSpike.rotation.z = dir * -0.5;
+        shoulder.add(sSpike);
 
-          const elbowGroup = new THREE.Group();
-          elbowGroup.position.set(0, -1.2*scale, 0);
-          upperArmGroup.add(elbowGroup);
+        const upperArmGroup = new THREE.Group();
+        limbRoot.add(upperArmGroup);
 
-          const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.11*scale), skinMat);
-          elbowGroup.add(elbow);
-          
-          const eSpike = new THREE.Mesh(new THREE.ConeGeometry(0.03*scale, 0.15*scale, 4), skinMat);
-          eSpike.position.set(0, 0, -0.1*scale);
-          eSpike.rotation.x = -Math.PI/2;
-          elbow.add(eSpike);
+        const upperArmGeo = new THREE.CylinderGeometry(0.1 * scale, 0.08 * scale, 1.2 * scale, 6);
+        upperArmGeo.translate(0, -0.6 * scale, 0);
+        const upperArm = new THREE.Mesh(upperArmGeo, skinMatBody);
+        createVeins(upperArm, 2, { r: 0.1 * scale, l: 1 * scale });
 
-          const forearmGeo = new THREE.CylinderGeometry(0.09*scale, 0.06*scale, 1.5*scale, 6);
-          forearmGeo.translate(0, -0.75*scale, 0);
-          const forearm = new THREE.Mesh(forearmGeo, skinMat);
-          createVeins(forearm, 2, {r: 0.09*scale, l: 1.2*scale}); // Veins
-          elbowGroup.add(forearm);
-          
-          // Wrap Vine on Forearm
-          const vineAnchorFore = new THREE.Group();
-          vineAnchorFore.position.y = -0.75 * scale;
-          elbowGroup.add(vineAnchorFore);
-          wrapVine(vineAnchorFore, 1.2 * scale, 0.08 * scale, 4);
+        const vineAnchorUpper = new THREE.Group();
+        vineAnchorUpper.position.y = -0.6 * scale;
+        upperArmGroup.add(vineAnchorUpper);
+        wrapVine(vineAnchorUpper, 1.0 * scale, 0.1 * scale, 3);
 
-          const handGroup = new THREE.Group();
-          handGroup.position.set(0, -1.5*scale, 0);
-          elbowGroup.add(handGroup);
+        const bicep = new THREE.Mesh(new THREE.SphereGeometry(0.12 * scale), skinMatBody);
+        bicep.scale.y = 1.5;
+        bicep.position.set(0, -0.5 * scale, 0.02 * scale);
+        upperArm.add(bicep);
 
-          const palm = new THREE.Mesh(new THREE.BoxGeometry(0.15*scale, 0.15*scale, 0.05*scale), skinMat);
-          handGroup.add(palm);
+        upperArmGroup.add(upperArm);
 
-          for(let k=0; k<4; k++) {
-             const finger = new THREE.Group();
-             finger.position.x = (k-1.5) * 0.08 * scale;
-             finger.position.y = -0.05 * scale;
-             
-             const f1 = new THREE.Mesh(new THREE.CylinderGeometry(0.015*scale, 0.012*scale, 0.2*scale), skinMat);
-             f1.position.y = -0.1*scale;
-             
-             const tip = new THREE.Mesh(new THREE.ConeGeometry(0.012*scale, 0.3*scale), teethMat);
-             tip.position.y = -0.35*scale; 
-             
-             finger.add(f1);
-             finger.add(tip);
-             finger.rotation.z = (k-1.5) * -0.3;
-             handGroup.add(finger);
-          }
+        const elbowGroup = new THREE.Group();
+        elbowGroup.position.set(0, -1.2 * scale, 0);
+        upperArmGroup.add(elbowGroup);
 
-          upperArmGroup.rotation.z = dir * 0.3; 
-          elbowGroup.rotation.z = dir * 0.2; 
-          elbowGroup.rotation.x = -0.5; 
+        const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.11 * scale), skinMatBody);
+        elbowGroup.add(elbow);
 
-          return { root: limbRoot, upper: upperArmGroup, lower: elbowGroup, hand: handGroup };
+        const eSpike = new THREE.Mesh(new THREE.ConeGeometry(0.03 * scale, 0.15 * scale, 4), skinMatBody);
+        eSpike.position.set(0, 0, -0.1 * scale);
+        eSpike.rotation.x = -Math.PI / 2;
+        elbow.add(eSpike);
+
+        const forearmGeo = new THREE.CylinderGeometry(0.09 * scale, 0.06 * scale, 1.5 * scale, 6);
+        forearmGeo.translate(0, -0.75 * scale, 0);
+        const forearm = new THREE.Mesh(forearmGeo, skinMatBody);
+        createVeins(forearm, 2, { r: 0.09 * scale, l: 1.2 * scale });
+        elbowGroup.add(forearm);
+
+        const vineAnchorFore = new THREE.Group();
+        vineAnchorFore.position.y = -0.75 * scale;
+        elbowGroup.add(vineAnchorFore);
+        wrapVine(vineAnchorFore, 1.2 * scale, 0.08 * scale, 4);
+
+        const handGroup = new THREE.Group();
+        handGroup.position.set(0, -1.5 * scale, 0);
+        elbowGroup.add(handGroup);
+
+        const palm = new THREE.Mesh(new THREE.BoxGeometry(0.15 * scale, 0.15 * scale, 0.05 * scale), skinMatBody);
+        handGroup.add(palm);
+
+        for (let k = 0; k < 4; k++) {
+          const finger = new THREE.Group();
+          finger.position.x = (k - 1.5) * 0.08 * scale;
+          finger.position.y = -0.05 * scale;
+
+          const f1 = new THREE.Mesh(new THREE.CylinderGeometry(0.015 * scale, 0.012 * scale, 0.2 * scale), skinMatBody);
+          f1.position.y = -0.1 * scale;
+
+          const tip = new THREE.Mesh(new THREE.ConeGeometry(0.012 * scale, 0.3 * scale), teethMat);
+          tip.position.y = -0.35 * scale;
+
+          finger.add(f1);
+          finger.add(tip);
+          finger.rotation.z = (k - 1.5) * -0.3;
+          handGroup.add(finger);
+        }
+
+        upperArmGroup.rotation.z = dir * 0.3;
+        elbowGroup.rotation.z = dir * 0.2;
+        elbowGroup.rotation.x = -0.5;
+
+        return { root: limbRoot, upper: upperArmGroup, lower: elbowGroup, hand: handGroup };
       };
 
       const leftArm = createLimb(true);
@@ -476,99 +464,132 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       group.add(leftArm.root);
       group.add(rightArm.root);
 
-      // --- Legs ---
+      // --- Legs (also faint) ---
       const createLeg = (isLeft: boolean) => {
-         const dir = isLeft ? -1 : 1;
-         const legGroup = new THREE.Group();
-         legGroup.position.set(dir * 0.25 * scale, 1.8 * scale, 0);
-         
-         const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.18*scale, 0.14*scale, 1.1*scale), skinMat);
-         thigh.position.y = -0.5*scale;
-         thigh.rotation.x = -0.4; 
-         thigh.rotation.z = dir * -0.15; 
-         createVeins(thigh, 3, {r: 0.18*scale, l: 0.9*scale}); // Veins
-         
-         // Wrap Vine Thigh
-         wrapVine(thigh, 1.0 * scale, 0.16 * scale, 3);
+        const dir = isLeft ? -1 : 1;
+        const legGroup = new THREE.Group();
+        legGroup.position.set(dir * 0.25 * scale, 1.8 * scale, 0);
 
-         const quad = new THREE.Mesh(new THREE.SphereGeometry(0.16*scale), skinMat);
-         quad.scale.y = 1.6;
-         quad.position.set(0, -0.4*scale, 0.05*scale);
-         thigh.add(quad);
+        const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.18 * scale, 0.14 * scale, 1.1 * scale), skinMatBody);
+        thigh.position.y = -0.5 * scale;
+        thigh.rotation.x = -0.4;
+        thigh.rotation.z = dir * -0.15;
+        createVeins(thigh, 3, { r: 0.18 * scale, l: 0.9 * scale });
 
-         const knee = new THREE.Mesh(new THREE.SphereGeometry(0.14*scale), skinMat);
-         knee.position.y = -0.55*scale;
-         thigh.add(knee);
+        wrapVine(thigh, 1.0 * scale, 0.16 * scale, 3);
 
-         const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.13*scale, 0.09*scale, 1.2*scale), skinMat);
-         shin.position.set(0, -0.6*scale, 0.2*scale); 
-         shin.rotation.x = 0.8; 
-         createVeins(shin, 2, {r: 0.12*scale, l: 1*scale}); // Veins
-         
-         // Wrap Vine Shin
-         wrapVine(shin, 1.1 * scale, 0.11 * scale, 3);
+        const quad = new THREE.Mesh(new THREE.SphereGeometry(0.16 * scale), skinMatBody);
+        quad.scale.y = 1.6;
+        quad.position.set(0, -0.4 * scale, 0.05 * scale);
+        thigh.add(quad);
 
-         const hock = new THREE.Mesh(new THREE.SphereGeometry(0.11*scale), skinMat);
-         hock.position.y = -0.6*scale;
-         shin.add(hock);
+        const knee = new THREE.Mesh(new THREE.SphereGeometry(0.14 * scale), skinMatBody);
+        knee.position.y = -0.55 * scale;
+        thigh.add(knee);
 
-         const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.1*scale, 0.08*scale, 0.9*scale), skinMat);
-         foot.position.set(0, -0.4*scale, -0.1*scale);
-         foot.rotation.x = -0.4; 
-         
-         for(let t=0; t<3; t++) {
-             const toe = new THREE.Mesh(new THREE.ConeGeometry(0.04*scale, 0.3*scale), teethMat);
-             toe.position.set((t-1)*0.15*scale, -0.45*scale, 0.1*scale);
-             toe.rotation.x = -0.5;
-             foot.add(toe);
-         }
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.13 * scale, 0.09 * scale, 1.2 * scale), skinMatBody);
+        shin.position.set(0, -0.6 * scale, 0.2 * scale);
+        shin.rotation.x = 0.8;
+        createVeins(shin, 2, { r: 0.12 * scale, l: 1 * scale });
 
-         thigh.add(shin);
-         shin.add(foot);
-         legGroup.add(thigh);
-         
-         return legGroup;
+        wrapVine(shin, 1.1 * scale, 0.11 * scale, 3);
+
+        const hock = new THREE.Mesh(new THREE.SphereGeometry(0.11 * scale), skinMatBody);
+        shin.add(hock);
+        hock.position.y = -0.6 * scale;
+
+        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.1 * scale, 0.08 * scale, 0.9 * scale), skinMatBody);
+        foot.position.set(0, -0.4 * scale, -0.1 * scale);
+        foot.rotation.x = -0.4;
+
+        for (let t = 0; t < 3; t++) {
+          const toe = new THREE.Mesh(new THREE.ConeGeometry(0.04 * scale, 0.3 * scale), teethMat);
+          toe.position.set((t - 1) * 0.15 * scale, -0.45 * scale, 0.1 * scale);
+          toe.rotation.x = -0.5;
+          foot.add(toe);
+        }
+
+        thigh.add(shin);
+        shin.add(foot);
+        legGroup.add(thigh);
+
+        return legGroup;
       }
 
       group.add(createLeg(true));
       group.add(createLeg(false));
 
-      return { group, petals, leftArm, rightArm, headGroup, chest, spineGroup, initialZ: 0 };
+      // --- Shadow cloud wrap (attached to this demogorgon) ---
+      const shadowCloudGroup = new THREE.Group();
+      group.add(shadowCloudGroup);
+
+      // create several dark cloud sprites around the torso / limbs
+      const shadowCount = 14 + Math.floor(Math.random() * 8);
+      for (let i = 0; i < shadowCount; i++) {
+        const spriteMat = cloudMat.clone();
+        spriteMat.opacity = 0.55 + Math.random() * 0.25;
+        spriteMat.rotation = Math.random() * Math.PI * 2;
+        // darker color tint
+        spriteMat.color = new THREE.Color(0x050305);
+
+        const sprite = new THREE.Sprite(spriteMat);
+        // position around the main body area (local to the group)
+        const px = (Math.random() - 0.5) * 1.8 * scale;
+        const py = (Math.random() - 0.1) * 1.6 * scale + 2.4 * scale; // around chest/head height
+        const pz = (Math.random() - 0.5) * 1.2 * scale;
+        sprite.position.set(px, py, pz);
+
+        // scale to wrap — some larger, some smaller to look layered
+        const s = (0.8 + Math.random() * 1.6) * scale * 12;
+        sprite.scale.set(s, s, 1);
+
+        // Slight motion parameters attached to sprite for minor drifting (saved on userData)
+        (sprite as any).userData = { sway: Math.random() * Math.PI * 2, speed: 0.2 + Math.random() * 0.6 };
+
+        shadowCloudGroup.add(sprite);
+      }
+
+      // add a small update function to gently drift shadow sprites (will be used in outer animate loop)
+      // We'll store a reference to shadowCloudGroup on the returned object so outer loop can nudge them:
+      // NOTE: outer animate should iterate and apply movement: sprite.rotation += ..., sprite.position.x += ..., using userData.speed/sway
+
+      return { group, petals, leftArm, rightArm, headGroup, chest, spineGroup, shadowCloudGroup, initialZ: 0 };
     };
+
 
     // Create Bat
     const createBat = () => {
-        const group = new THREE.Group();
-        const body = new THREE.Mesh(
-            new THREE.SphereGeometry(0.15, 6, 6),
-            new THREE.MeshStandardMaterial({ color: 0x333333 }) 
-        );
-        group.add(body);
+      const group = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.SphereGeometry(0.15, 6, 6),
+        new THREE.MeshStandardMaterial({ color: 0x333333 })
+      );
+      group.add(body);
 
-        const wingShape = new THREE.Shape();
-        wingShape.moveTo(0, 0);
-        wingShape.lineTo(0.6, 0.3);
-        wingShape.lineTo(1.2, 0);
-        wingShape.lineTo(0.8, -0.4);
-        wingShape.lineTo(0, 0);
+      const wingShape = new THREE.Shape();
+      wingShape.moveTo(0, 0);
+      wingShape.lineTo(0.6, 0.3);
+      wingShape.lineTo(1.2, 0);
+      wingShape.lineTo(0.8, -0.4);
+      wingShape.lineTo(0, 0);
 
-        const wingGeo = new THREE.ShapeGeometry(wingShape);
-        const wingMat = new THREE.MeshStandardMaterial({ 
-          color: 0x1a1a1a, 
-          side: THREE.DoubleSide 
-        });
+      const wingGeo = new THREE.ShapeGeometry(wingShape);
+      const wingMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1a1a,
+        side: THREE.DoubleSide
+      });
 
-        const leftWing = new THREE.Mesh(wingGeo, wingMat);
-        leftWing.scale.set(-1, 1, 1);
-        leftWing.position.x = -0.1;
+      const leftWing = new THREE.Mesh(wingGeo, wingMat);
+      leftWing.scale.set(-1, 1, 1);
+      leftWing.position.x = -0.1;
 
-        const rightWing = new THREE.Mesh(wingGeo, wingMat);
-        rightWing.position.x = 0.1;
+      const rightWing = new THREE.Mesh(wingGeo, wingMat);
+      rightWing.position.x = 0.1;
 
-        group.add(leftWing);
-        group.add(rightWing);
+      group.add(leftWing);
+      group.add(rightWing);
 
-        return { group, leftWing, rightWing };
+      return { group, leftWing, rightWing };
     };
 
     // --- Instantiate Monsters ---
@@ -586,50 +607,50 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
 
     // Bats
     const bats: { obj: any, speed: number, offset: number, radius: number }[] = [];
-    for(let i=0; i<12; i++) {
-        const bat = createBat();
-        const scale = 0.5 + Math.random() * 0.8;
-        bat.group.scale.set(scale, scale, scale);
-        scene.add(bat.group);
-        bats.push({ 
-            obj: bat, 
-            speed: 1 + Math.random() * 2, 
-            offset: Math.random() * Math.PI * 2,
-            radius: 4 + Math.random() * 8
-        });
+    for (let i = 0; i < 12; i++) {
+      const bat = createBat();
+      const scale = 0.5 + Math.random() * 0.8;
+      bat.group.scale.set(scale, scale, scale);
+      scene.add(bat.group);
+      bats.push({
+        obj: bat,
+        speed: 1 + Math.random() * 2,
+        offset: Math.random() * Math.PI * 2,
+        radius: 4 + Math.random() * 8
+      });
     }
 
     // --- Procedural Content: Vines ---
-    const vineMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x444444, 
+    const vineMaterial = new THREE.MeshStandardMaterial({
+      color: 0x444444,
       roughness: 0.8,
       metalness: 0.2
     });
 
     // Dark Vine Material (New)
-    const darkVineMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0x050505, // Almost black
-        roughness: 0.95,
-        metalness: 0.1
+    const darkVineMaterial = new THREE.MeshStandardMaterial({
+      color: 0x050505, // Almost black
+      roughness: 0.95,
+      metalness: 0.1
     });
 
     const createVine = (radius: number, length: number, count: number, offsetZ: number, mat: THREE.Material = vineMaterial, offsetX: number = 0, offsetY: number = 0) => {
-        const curvePoints = [];
-        for (let i = 0; i < count; i++) {
-          curvePoints.push(new THREE.Vector3(
-            Math.sin(i * 0.5) * radius + (Math.random() - 0.5) * 2 + offsetX,
-            Math.cos(i * 0.3) * radius + (Math.random() - 0.5) * 2 + offsetY,
-            -i * 2 + offsetZ
-          ));
-        }
-        const curve = new THREE.CatmullRomCurve3(curvePoints);
-        const thickness = 0.2 + Math.random() * 0.3;
-        const vineGeo = new THREE.TubeGeometry(curve, count * 2, thickness, 8, false);
-        const mesh = new THREE.Mesh(vineGeo, mat);
-        scene.add(mesh);
-        return mesh;
+      const curvePoints = [];
+      for (let i = 0; i < count; i++) {
+        curvePoints.push(new THREE.Vector3(
+          Math.sin(i * 0.5) * radius + (Math.random() - 0.5) * 2 + offsetX,
+          Math.cos(i * 0.3) * radius + (Math.random() - 0.5) * 2 + offsetY,
+          -i * 2 + offsetZ
+        ));
+      }
+      const curve = new THREE.CatmullRomCurve3(curvePoints);
+      const thickness = 0.2 + Math.random() * 0.3;
+      const vineGeo = new THREE.TubeGeometry(curve, count * 2, thickness, 8, false);
+      const mesh = new THREE.Mesh(vineGeo, mat);
+      scene.add(mesh);
+      return mesh;
     };
-    
+
     // Existing vines (Default material)
     const vine1 = createVine(5, 50, 60, 5);
     const vine2 = createVine(7, 50, 60, -30);
@@ -637,22 +658,22 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
 
     // New Dark Vines scattered all over
     const darkVines: THREE.Mesh[] = [];
-    for(let i=0; i<25; i++) { 
-        // Scatter deeply from front to back
-        const z = 10 - (Math.random() * 120); 
-        
-        // Random horizontal/vertical offset to fill the space
-        const x = (Math.random() - 0.5) * 80;
-        const y = (Math.random() - 0.5) * 60;
-        
-        const r = 2 + Math.random() * 6;
-        
-        const mesh = createVine(r, 60, 40, z, darkVineMaterial, x, y);
-        // Random rotation to create chaotic web
-        mesh.rotation.z = Math.random() * Math.PI * 2;
-        mesh.rotation.y = (Math.random() - 0.5) * 0.5;
-        
-        darkVines.push(mesh);
+    for (let i = 0; i < 25; i++) {
+      // Scatter deeply from front to back
+      const z = 10 - (Math.random() * 120);
+
+      // Random horizontal/vertical offset to fill the space
+      const x = (Math.random() - 0.5) * 80;
+      const y = (Math.random() - 0.5) * 60;
+
+      const r = 2 + Math.random() * 6;
+
+      const mesh = createVine(r, 60, 40, z, darkVineMaterial, x, y);
+      // Random rotation to create chaotic web
+      mesh.rotation.z = Math.random() * Math.PI * 2;
+      mesh.rotation.y = (Math.random() - 0.5) * 0.5;
+
+      darkVines.push(mesh);
     }
 
     // --- Animation Loop ---
@@ -670,58 +691,78 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
 
       // If speed is very low, increase stalking factor
       if (scrollSpeed < 0.0001) {
-          stalkFactorRef.current = Math.min(1, stalkFactorRef.current + 0.01);
+        stalkFactorRef.current = Math.min(1, stalkFactorRef.current + 0.01);
       } else {
-          // If moving, quickly reset stalking
-          stalkFactorRef.current = Math.max(0, stalkFactorRef.current - 0.05);
+        // If moving, quickly reset stalking
+        stalkFactorRef.current = Math.max(0, stalkFactorRef.current - 0.05);
       }
       const stalkFactor = stalkFactorRef.current; // 0 to 1
 
       // 1. Red Light Pulse (Heartbeat)
-      const heartbeat = (Math.exp(Math.sin(time * 3)) - 0.367) * 0.8 + 1; 
+      const heartbeat = (Math.exp(Math.sin(time * 3)) - 0.367) * 0.8 + 1;
       const flicker = Math.random() > 0.9 ? Math.random() * 2 : 0;
       redLight.intensity = heartbeat + flicker;
       redLight.position.x = Math.sin(time) * 5;
 
       // 1b. Thunder Logic - Subtle, Intermittent, Flickering
-      if (Math.random() < 0.008 && thunderTimer <= 0) {
-          thunderTimer = Math.floor(Math.random() * 30 + 10); // Random duration
+      if (Math.random() < 0.005 && thunderTimer <= 0) {
+        thunderTimer = Math.floor(Math.random() * 20 + 10); // Random duration
       }
       if (thunderTimer > 0) {
-          // Flickering intensity
-          thunderLight.intensity = Math.random() > 0.5 ? (30 + Math.random() * 50) : (5 + Math.random() * 10);
-          thunderTimer--;
+        // Flickering intensity
+        thunderLight.intensity = Math.random() > 0.4 ? (40 + Math.random() * 60) : (5 + Math.random() * 15);
+        
+        // Move light source slightly to simulate lightning traveling through clouds
+        thunderLight.position.x = (Math.random() - 0.5) * 100;
+        thunderLight.position.z = -50 + (Math.random() - 0.5) * 50;
+
+        thunderTimer--;
       } else {
-          thunderLight.intensity = 0;
+        thunderLight.intensity = 0;
+        thunderLight.position.set(0, 100, -50); // Reset position
       }
 
       // 2. Storm & Mist Animation
       stormParticles.forEach((p, idx) => {
-           // Internal turbulence
-           p.material.rotation += 0.001 * (idx % 2 === 0 ? 1 : -1);
-           // Slight drift
-           p.position.x += Math.sin(time * 0.1 + idx) * 0.02;
-           // Pulsing opacity for shadow effect
-           p.material.opacity = 0.4 + Math.sin(time * 0.5 + idx) * 0.2;
+        // Internal turbulence
+        p.material.rotation += 0.001 * (idx % 2 === 0 ? 1 : -1);
+        // Slight drift
+        p.position.x += Math.sin(time * 0.1 + idx) * 0.02;
+        // Pulsing opacity for shadow effect
+        p.material.opacity = 0.4 + Math.sin(time * 0.5 + idx) * 0.2;
       });
 
       mistParticles.forEach(p => {
-          p.sprite.position.z += p.speedZ;
-          p.sprite.position.x += Math.sin(time * p.swaySpeed + p.swayOffset) * 0.02;
-          if (p.sprite.position.z > camera.position.z + 10) {
-              p.sprite.position.z = -100;
-              p.sprite.position.x = (Math.random() - 0.5) * 60;
-          }
+        p.sprite.position.z += p.speedZ;
+        p.sprite.position.x += Math.sin(time * p.swaySpeed + p.swayOffset) * 0.02;
+        if (p.sprite.position.z > camera.position.z + 10) {
+          p.sprite.position.z = -100;
+          p.sprite.position.x = (Math.random() - 0.5) * 60;
+        }
+      });
+
+      // gently drift the demogorgon's local shadow clouds (if present)
+      [demo1, demo2].forEach(demo => {
+        if (!demo.shadowCloudGroup) return;
+        demo.shadowCloudGroup.children.forEach((s: any, idx: number) => {
+          if (!s.userData) return;
+          // a subtle rotation + sway
+          s.material.rotation += 0.001 + Math.sin(time * 0.2 + s.userData.sway) * 0.0005;
+          s.position.x += Math.sin(time * 0.3 + s.userData.sway + idx) * 0.0008;
+          s.position.z += Math.cos(time * 0.25 + s.userData.sway + idx) * 0.0008;
+          // ensure they softly change opacity to feel alive
+          s.material.opacity = THREE.MathUtils.clamp(s.material.opacity + (Math.sin(time * 0.6 + idx) * 0.002), 0.15, 0.9);
+        });
       });
 
       // 3. Demogorgons (Stalking Behavior)
-      
-      const openAmount = (Math.sin(time * 1.5) + 1) * 0.5; 
-      const petalRotation = Math.PI/6 + openAmount * Math.PI/3;
+
+      const openAmount = (Math.sin(time * 1.5) + 1) * 0.5;
+      const petalRotation = Math.PI / 6 + openAmount * Math.PI / 3;
 
       demo1.petals.forEach(p => p.rotation.x = petalRotation);
       demo2.petals.forEach(p => p.rotation.x = petalRotation);
-      
+
       // Arm Animation
       const reach = Math.sin(time * 0.5) * 0.2;
       const hunt = Math.cos(time * 0.7) * 0.15;
@@ -733,8 +774,8 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       // Demo 1
       demo1.leftArm.upper.rotation.z = -0.4 + reach + twitch + attackPose;
       demo1.leftArm.upper.rotation.x = hunt - attackPose;
-      demo1.leftArm.lower.rotation.x = -1.2 + reach - attackPose; 
-      
+      demo1.leftArm.lower.rotation.x = -1.2 + reach - attackPose;
+
       demo1.rightArm.upper.rotation.z = 0.4 - reach - twitch - attackPose;
       demo1.rightArm.upper.rotation.x = -hunt - attackPose;
       demo1.rightArm.lower.rotation.x = -1.0 - reach - attackPose;
@@ -752,107 +793,107 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
 
       // Stalking: Head Tracking & Leaning
       // Interpolate between idle sway and looking at camera
-      
+
       const camPos = camera.position;
 
       // Helper to smooth lookAt
       const lookAtCamera = (obj: THREE.Object3D, intensity: number) => {
-          // Calculate target quaternion
-          const originalQuat = obj.quaternion.clone();
-          obj.lookAt(camPos);
-          const targetQuat = obj.quaternion.clone();
-          obj.quaternion.copy(originalQuat);
-          obj.quaternion.slerp(targetQuat, intensity * 0.1); // slow smooth turn
+        // Calculate target quaternion
+        const originalQuat = obj.quaternion.clone();
+        obj.lookAt(camPos);
+        const targetQuat = obj.quaternion.clone();
+        obj.quaternion.copy(originalQuat);
+        obj.quaternion.slerp(targetQuat, intensity * 0.1); // slow smooth turn
       };
 
       // Standard Idle Head Movement
       const idleRotY1 = Math.sin(time * 0.4) * 0.4;
       const idleRotX1 = Math.sin(time * 0.2) * 0.2 + 0.1;
-      
+
       // If stalking, override with LookAt logic
       if (stalkFactor > 0.01) {
-          lookAtCamera(demo1.headGroup, stalkFactor);
-          lookAtCamera(demo2.headGroup, stalkFactor);
-          
-          // Lean Forward (Rotate whole group X)
-          demo1.group.rotation.x = THREE.MathUtils.lerp(0, 0.3, stalkFactor);
-          demo2.group.rotation.x = THREE.MathUtils.lerp(0, 0.3, stalkFactor);
+        lookAtCamera(demo1.headGroup, stalkFactor);
+        lookAtCamera(demo2.headGroup, stalkFactor);
 
-          // Creep Forward (Position Z)
-          const creep1 = demo1.initialZ + (stalkFactor * 3 * Math.sin(time * 0.5)); 
-          const creep2 = demo2.initialZ + (stalkFactor * 3 * Math.sin(time * 0.5));
-          
-          demo1.group.position.z = THREE.MathUtils.lerp(demo1.group.position.z, creep1, 0.05);
-          demo2.group.position.z = THREE.MathUtils.lerp(demo2.group.position.z, creep2, 0.05);
+        // Lean Forward (Rotate whole group X)
+        demo1.group.rotation.x = THREE.MathUtils.lerp(0, 0.3, stalkFactor);
+        demo2.group.rotation.x = THREE.MathUtils.lerp(0, 0.3, stalkFactor);
+
+        // Creep Forward (Position Z)
+        const creep1 = demo1.initialZ + (stalkFactor * 3 * Math.sin(time * 0.5));
+        const creep2 = demo2.initialZ + (stalkFactor * 3 * Math.sin(time * 0.5));
+
+        demo1.group.position.z = THREE.MathUtils.lerp(demo1.group.position.z, creep1, 0.05);
+        demo2.group.position.z = THREE.MathUtils.lerp(demo2.group.position.z, creep2, 0.05);
       } else {
-          // Revert to idle animations
-          demo1.headGroup.rotation.y = idleRotY1;
-          demo1.headGroup.rotation.x = idleRotX1;
-          
-          demo2.headGroup.rotation.z = Math.sin(time * 0.8) * 0.1;
-          demo2.headGroup.rotation.y = -0.2 + Math.sin(time * 0.3) * 0.3;
+        // Revert to idle animations
+        demo1.headGroup.rotation.y = idleRotY1;
+        demo1.headGroup.rotation.x = idleRotX1;
 
-          demo1.group.rotation.x = THREE.MathUtils.lerp(demo1.group.rotation.x, 0, 0.1);
-          demo2.group.rotation.x = THREE.MathUtils.lerp(demo2.group.rotation.x, 0, 0.1);
-          
-          demo1.group.position.z = THREE.MathUtils.lerp(demo1.group.position.z, demo1.initialZ, 0.05);
-          demo2.group.position.z = THREE.MathUtils.lerp(demo2.group.position.z, demo2.initialZ, 0.05);
+        demo2.headGroup.rotation.z = Math.sin(time * 0.8) * 0.1;
+        demo2.headGroup.rotation.y = -0.2 + Math.sin(time * 0.3) * 0.3;
+
+        demo1.group.rotation.x = THREE.MathUtils.lerp(demo1.group.rotation.x, 0, 0.1);
+        demo2.group.rotation.x = THREE.MathUtils.lerp(demo2.group.rotation.x, 0, 0.1);
+
+        demo1.group.position.z = THREE.MathUtils.lerp(demo1.group.position.z, demo1.initialZ, 0.05);
+        demo2.group.position.z = THREE.MathUtils.lerp(demo2.group.position.z, demo2.initialZ, 0.05);
       }
 
       // 4. Bats
       bats.forEach((bat, i) => {
-          const flapSpeed = 15;
-          bat.obj.leftWing.rotation.z = Math.sin(time * flapSpeed) * 0.6 + 0.3;
-          bat.obj.rightWing.rotation.z = -Math.sin(time * flapSpeed) * 0.6 - 0.3;
+        const flapSpeed = 15;
+        bat.obj.leftWing.rotation.z = Math.sin(time * flapSpeed) * 0.6 + 0.3;
+        bat.obj.rightWing.rotation.z = -Math.sin(time * flapSpeed) * 0.6 - 0.3;
 
-          const t = time * bat.speed * 0.2 + bat.offset;
-          const r = bat.radius;
-          const zBase = camera.position.z - 15 - (i * 3);
-          
-          bat.obj.group.position.x = Math.sin(t) * r;
-          bat.obj.group.position.y = Math.cos(t * 1.5) * (r * 0.6) + 2; 
-          bat.obj.group.position.z = zBase + Math.sin(t * 2) * 5;
-          
-          bat.obj.group.lookAt(
-              Math.sin(t + 0.1) * r,
-              Math.cos((t + 0.1) * 1.5) * (r * 0.6) + 2,
-              zBase + Math.sin((t + 0.1) * 2) * 5
-          );
+        const t = time * bat.speed * 0.2 + bat.offset;
+        const r = bat.radius;
+        const zBase = camera.position.z - 15 - (i * 3);
+
+        bat.obj.group.position.x = Math.sin(t) * r;
+        bat.obj.group.position.y = Math.cos(t * 1.5) * (r * 0.6) + 2;
+        bat.obj.group.position.z = zBase + Math.sin(t * 2) * 5;
+
+        bat.obj.group.lookAt(
+          Math.sin(t + 0.1) * r,
+          Math.cos((t + 0.1) * 1.5) * (r * 0.6) + 2,
+          zBase + Math.sin((t + 0.1) * 2) * 5
+        );
       });
 
       // 5. Audio Triggers (Proximity & Random)
-      
+
       // Calculate distances
       const dist1 = Math.abs(camera.position.z - demo1.group.position.z);
       const dist2 = Math.abs(camera.position.z - demo2.group.position.z);
 
       // Trigger 1: Close to Demo 1 (pained/alert)
       if (dist1 < 15 && !hasRoared1.current) {
-          growlSounds[0].currentTime = 0;
-          growlSounds[0].play().catch(() => {});
-          redLight.intensity = 5;
-          hasRoared1.current = true;
+        growlSounds[0].currentTime = 0;
+        growlSounds[0].play().catch(() => { });
+        redLight.intensity = 5;
+        hasRoared1.current = true;
       } else if (dist1 > 30) {
-          // Reset when moved away
-          hasRoared1.current = false;
+        // Reset when moved away
+        hasRoared1.current = false;
       }
 
       // Trigger 2: Close to Demo 2 (aggressive)
       if (dist2 < 20 && !hasRoared2.current) {
-          growlSounds[1].currentTime = 0;
-          growlSounds[1].play().catch(() => {});
-          redLight.intensity = 8;
-          hasRoared2.current = true;
+        growlSounds[1].currentTime = 0;
+        growlSounds[1].play().catch(() => { });
+        redLight.intensity = 8;
+        hasRoared2.current = true;
       } else if (dist2 > 40) {
-          hasRoared2.current = false;
+        hasRoared2.current = false;
       }
 
       // Random ambient growls (lower chance than before to avoid clutter)
-      if (Math.random() < 0.001) { 
+      if (Math.random() < 0.001) {
         const s = growlSounds[Math.floor(Math.random() * growlSounds.length)];
         if (s.paused) {
-           s.playbackRate = 0.8 + Math.random() * 0.4;
-           s.play().catch(() => {});
+          s.playbackRate = 0.8 + Math.random() * 0.4;
+          s.play().catch(() => { });
         }
       }
 
@@ -903,23 +944,23 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
   // Update Camera Z based on Scroll
   useEffect(() => {
     if (cameraRef.current) {
-      const targetZ = 5 - (scrollProgress * 95); 
-      
+      const targetZ = 5 - (scrollProgress * 95);
+
       const driftX = Math.sin(scrollProgress * 10) * 2;
       const driftY = Math.cos(scrollProgress * 15) * 1.5;
 
       cameraRef.current.position.z = targetZ;
       cameraRef.current.position.x = driftX;
       cameraRef.current.position.y = driftY;
-      
+
       cameraRef.current.lookAt(0, 0, targetZ - 20);
     }
   }, [scrollProgress]);
 
   return (
-    <div 
-      ref={mountRef} 
-      className="fixed inset-0 z-0 pointer-events-none" 
+    <div
+      ref={mountRef}
+      className="fixed inset-0 z-0 pointer-events-none"
       aria-hidden="true"
     />
   );

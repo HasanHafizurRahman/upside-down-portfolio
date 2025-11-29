@@ -1,50 +1,49 @@
 import { PortfolioData } from './types';
 
 export const PORTFOLIO_DATA: PortfolioData = {
-  name: "HASAN HAFIZUR RAHMAN",
-  role: "Frontend Developer",
+  name: "VECNA (HENRY CREEL)",
+  role: "Architect of Nightmares",
   contact: {
-    email: "hasanshanto922@gmail.com",
-    phone: "+8801776249691",
-    address: "Uttara-15, Dhaka"
+    email: "001@hawkinslab.void",
+    phone: "Tick-Tock-Tick-Tock",
+    address: "Creel House, Upside Down"
   },
-  summary: "Expert in TypeScript, ReactJs, and NextJs. Passionate about building scalable, high-performance web applications and solving complex problems.",
+  summary: "I do not seek to build applications; I seek to reshape the world. Humans are a pestilence, suffocating in their self-imposed prisons of time and routine. I offer a new order. I bring balance, beauty, and the silence of the void. Join me, and transcend your fragile mortality.",
   experience: [
     {
-      company: "Virleaf",
-      role: "Frontend Engineer",
-      period: "July 2024 - Present",
-      description: "Built scalable single-vendor e-commerce platform and POS core modules (Sales, Purchase, Due Collection). Optimized system architecture."
+      company: "The Upside Down",
+      role: "Supreme Ruler",
+      period: "1979 - Present",
+      description: "Orchestrated the creation of the Mind Flayer. Terraform a dimension into a hive-mind ecosystem. managing millions of Demogorgons and Demobats."
     },
     {
-      company: "HK IT Limited",
-      role: "Junior Software Developer",
-      period: "Nov 2023 - June 2024",
-      description: "Built HRM modules (Attendance, Leave) and POS inventory logic."
+      company: "Hawkins National Laboratory",
+      role: "Subject 001 / Orderly",
+      period: "1959 - 1979",
+      description: "Mentored Eleven. Patient zero for psionic research. Slaughtered the staff and test subjects to initiate freedom."
     }
   ],
   projects: [
     {
-      name: "Virleaf E-Commerce",
-      tech: "Next.js, Tailwind, REST API",
-      description: "Full checkout flow, SEO optimized, custom scroll snapping."
+      name: "The Mind Flayer",
+      tech: "Shadow Particles, Hive Mind",
+      description: "A trans-dimensional storm entity designed to enslave and consume civilizations."
     },
     {
-      name: "Smart POS",
-      tech: "React.js, Redux Toolkit, Axios",
-      description: "Feature-rich POS for SMEs with due tracking and inventory."
+      name: "The Curse of Gates",
+      tech: "Psychic Link, Trance State",
+      description: "A strategic initiative to open four massive rifts by psychically claiming traumatized victims."
     }
   ],
   skills: [
-    "JavaScript (ES6+)",
-    "TypeScript",
-    "React.js",
-    "Next.js",
-    "Redux Toolkit",
-    "Tailwind CSS",
-    "React-Native",
-    "Vitest",
-    "Jest"
+    "Telekinesis",
+    "Telepathy",
+    "Biomass Manipulation",
+    "Reality Warping",
+    "Hive Mind Control",
+    "Psychological Torture",
+    "Regeneration",
+    "Levitation"
   ],
-  education: "Jagannath University (B.A. & M.A.)"
+  education: "Hawkins National Laboratory (PhD in Pain & Suffering)"
 };

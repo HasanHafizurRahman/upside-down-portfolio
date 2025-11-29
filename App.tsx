@@ -123,15 +123,6 @@ function App() {
            </div>
         </section>
 
-        {/* Section 6: AI Demo (Image Edit) */}
-        <section className="min-h-screen w-full flex flex-col items-center justify-center p-6">
-           <div className="mb-8 text-center">
-             <h3 className="font-serif text-4xl text-ud-red mb-2">05. THE UPSIDE DOWN LAB</h3>
-             <p className="text-gray-400">Powered by Gemini 2.5 Flash Image</p>
-           </div>
-           <ImageEditor />
-        </section>
-
         {/* Section 7: Contact */}
         <section className="h-[50vh] w-full flex flex-col items-center justify-center p-6 bg-gradient-to-t from-ud-black to-transparent">
           <h3 className="font-serif text-5xl text-white mb-8">MAKE CONTACT</h3>
