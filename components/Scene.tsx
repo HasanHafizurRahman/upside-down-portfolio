@@ -601,25 +601,54 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       metalness: 0.2
     });
 
-    const createVine = (radius: number, length: number, count: number, offsetZ: number) => {
+    // Dark Vine Material (New)
+    const darkVineMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x050505, // Almost black
+        roughness: 0.95,
+        metalness: 0.1
+    });
+
+    const createVine = (radius: number, length: number, count: number, offsetZ: number, mat: THREE.Material = vineMaterial, offsetX: number = 0, offsetY: number = 0) => {
         const curvePoints = [];
         for (let i = 0; i < count; i++) {
           curvePoints.push(new THREE.Vector3(
-            Math.sin(i * 0.5) * radius + (Math.random() - 0.5) * 2,
-            Math.cos(i * 0.3) * radius + (Math.random() - 0.5) * 2,
+            Math.sin(i * 0.5) * radius + (Math.random() - 0.5) * 2 + offsetX,
+            Math.cos(i * 0.3) * radius + (Math.random() - 0.5) * 2 + offsetY,
             -i * 2 + offsetZ
           ));
         }
         const curve = new THREE.CatmullRomCurve3(curvePoints);
-        const vineGeo = new THREE.TubeGeometry(curve, count * 2, 0.3, 8, false);
-        const mesh = new THREE.Mesh(vineGeo, vineMaterial);
+        const thickness = 0.2 + Math.random() * 0.3;
+        const vineGeo = new THREE.TubeGeometry(curve, count * 2, thickness, 8, false);
+        const mesh = new THREE.Mesh(vineGeo, mat);
         scene.add(mesh);
         return mesh;
     };
     
+    // Existing vines (Default material)
     const vine1 = createVine(5, 50, 60, 5);
     const vine2 = createVine(7, 50, 60, -30);
     const vine3 = createVine(4, 50, 40, -60);
+
+    // New Dark Vines scattered all over
+    const darkVines: THREE.Mesh[] = [];
+    for(let i=0; i<25; i++) { 
+        // Scatter deeply from front to back
+        const z = 10 - (Math.random() * 120); 
+        
+        // Random horizontal/vertical offset to fill the space
+        const x = (Math.random() - 0.5) * 80;
+        const y = (Math.random() - 0.5) * 60;
+        
+        const r = 2 + Math.random() * 6;
+        
+        const mesh = createVine(r, 60, 40, z, darkVineMaterial, x, y);
+        // Random rotation to create chaotic web
+        mesh.rotation.z = Math.random() * Math.PI * 2;
+        mesh.rotation.y = (Math.random() - 0.5) * 0.5;
+        
+        darkVines.push(mesh);
+    }
 
     // --- Animation Loop ---
     let frameId: number;
@@ -827,6 +856,10 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       vine2.geometry.dispose();
       vine3.geometry.dispose();
       vineMaterial.dispose();
+
+      darkVines.forEach(v => v.geometry.dispose());
+      darkVineMaterial.dispose();
+
       mistParticles.forEach(p => p.sprite.material.dispose());
       mistTexture.dispose();
       cloudTexture.dispose();
