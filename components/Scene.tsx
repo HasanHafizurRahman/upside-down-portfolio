@@ -72,12 +72,12 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
 
     // --- Mind Flayer Shadow Cloud & Thunder ---
     const stormGroup = new THREE.Group();
-    stormGroup.position.set(0, 20, -80);
     scene.add(stormGroup);
 
-    // Thunder Light (Hidden inside the cloud)
-    const thunderLight = new THREE.PointLight(0xff0033, 0, 300);
-    stormGroup.add(thunderLight);
+    // Thunder Light (Global illumination from above)
+    const thunderLight = new THREE.PointLight(0xff0033, 0, 1000, 2);
+    thunderLight.position.set(0, 80, -40);
+    scene.add(thunderLight);
 
     // Cloud Texture
     const cloudCanvas = document.createElement('canvas');
@@ -85,8 +85,8 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
     const cCtx = cloudCanvas.getContext('2d');
     if (cCtx) {
         const g = cCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
-        g.addColorStop(0, 'rgba(20, 20, 25, 0.9)'); 
-        g.addColorStop(0.6, 'rgba(10, 10, 15, 0.4)'); 
+        g.addColorStop(0, 'rgba(15, 10, 12, 0.9)'); 
+        g.addColorStop(0.5, 'rgba(8, 0, 0, 0.5)'); 
         g.addColorStop(1, 'rgba(0, 0, 0, 0)'); 
         cCtx.fillStyle = g;
         cCtx.fillRect(0, 0, 128, 128);
@@ -95,28 +95,28 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
     const cloudMat = new THREE.SpriteMaterial({ 
         map: cloudTexture, 
         transparent: true, 
-        opacity: 0.8,
-        color: 0x222222,
+        opacity: 0.9,
+        color: 0x050101, // Very dark, almost black with slight red tint
         blending: THREE.NormalBlending 
     });
 
     const stormParticles: THREE.Sprite[] = [];
-    // Create massive cloud formation
-    for(let i=0; i<80; i++) {
+    // Create massive amorphous cloud formation overhead (The Mind Flayer Shadow)
+    for(let i=0; i<200; i++) {
         const sprite = new THREE.Sprite(cloudMat.clone());
-        // Spider-like shape or just massive storm wall
-        const r = 40 + Math.random() * 30;
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.random() * Math.PI;
         
-        sprite.position.set(
-            (Math.random() - 0.5) * 120,
-            (Math.random() - 0.5) * 60,
-            (Math.random() - 0.5) * 40
-        );
-        const s = 40 + Math.random() * 40;
+        // Spread widely across the "sky"
+        const x = (Math.random() - 0.5) * 250; 
+        const y = 40 + Math.random() * 60; // High up
+        const z = -200 + Math.random() * 200; // Spanning deep back to near front
+        
+        sprite.position.set(x, y, z);
+        
+        const s = 60 + Math.random() * 80; // Large billowy shapes
         sprite.scale.set(s, s, 1);
         sprite.material.rotation = Math.random() * Math.PI;
+        sprite.material.opacity = 0.5 + Math.random() * 0.5;
+        
         stormGroup.add(sprite);
         stormParticles.push(sprite);
     }
@@ -638,20 +638,25 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
 
       // 1b. Thunder Logic
       if (Math.random() < 0.005 && thunderTimer <= 0) {
-          thunderTimer = 20; // Frames of thunder
+          thunderTimer = 25; // Frames of thunder
       }
       if (thunderTimer > 0) {
-          thunderLight.intensity = (Math.random() * 50) + 10;
+          // Thunder intensity flickers
+          thunderLight.intensity = (Math.random() * 80) + 20;
           thunderTimer--;
       } else {
           thunderLight.intensity = 0;
       }
 
       // 2. Storm & Mist Animation
-      stormGroup.rotation.y += 0.001;
-      stormGroup.rotation.z = Math.sin(time * 0.1) * 0.1;
+      // Slowly rotate the entire sky mass? No, just turbulence to feel amorphous
       stormParticles.forEach((p, idx) => {
-           p.material.rotation += 0.002 * (idx % 2 === 0 ? 1 : -1);
+           // Internal turbulence
+           p.material.rotation += 0.001 * (idx % 2 === 0 ? 1 : -1);
+           // Slight drift
+           p.position.x += Math.sin(time * 0.1 + idx) * 0.02;
+           // Pulsing opacity for shadow effect
+           p.material.opacity = 0.5 + Math.sin(time * 0.5 + idx) * 0.2;
       });
 
       mistParticles.forEach(p => {
@@ -724,15 +729,10 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
           lookAtCamera(demo2.headGroup, stalkFactor);
           
           // Lean Forward (Rotate whole group X)
-          // Default rotation for Demo 1 was 0, Demo 2 was 0.
-          // Note: Demo 1 has Rotation Y 0.4.
-          // We want to rotate along local X axis to lean forward.
           demo1.group.rotation.x = THREE.MathUtils.lerp(0, 0.3, stalkFactor);
           demo2.group.rotation.x = THREE.MathUtils.lerp(0, 0.3, stalkFactor);
 
           // Creep Forward (Position Z)
-          // Slowly move Z closer to camera from initialZ
-          // Max creep distance = 4 units
           const creep1 = demo1.initialZ + (stalkFactor * 3 * Math.sin(time * 0.5)); 
           const creep2 = demo2.initialZ + (stalkFactor * 3 * Math.sin(time * 0.5));
           
