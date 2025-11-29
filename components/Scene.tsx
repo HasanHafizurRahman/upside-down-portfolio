@@ -207,11 +207,11 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
         roughness: 0.3
       });
 
-      // Wrapping Vine Material
+      // Wrapping Vine Material - Dark and Constricting
       const wrapVineMat = new THREE.MeshStandardMaterial({
-          color: 0x050505,
-          roughness: 1,
-          metalness: 0,
+          color: 0x030303,
+          roughness: 0.9,
+          metalness: 0.1,
       });
 
       // Helper to add procedural surface veins
@@ -243,17 +243,19 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       // Helper to wrap vines AROUND a limb (Constricting)
       const wrapVine = (parent: THREE.Mesh | THREE.Group, length: number, radius: number, turns: number = 2) => {
           const points = [];
-          const rBase = radius + 0.02 * scale; // Slightly larger than limb
-          for(let i=0; i<=20; i++) {
-              const t = i/20;
+          const rBase = radius; // Tight fit
+          const loops = 40;
+          for(let i=0; i<=loops; i++) {
+              const t = i/loops;
               const angle = t * Math.PI * 2 * turns;
               const y = (t - 0.5) * length;
-              const r = rBase + (Math.random()-0.5) * 0.02 * scale;
+              // Irregular radius for organic look, occasionally dipping in (constricting)
+              const r = rBase + (Math.sin(t * 12) * 0.015 * scale) + 0.01 * scale;
               points.push(new THREE.Vector3(Math.cos(angle)*r, y, Math.sin(angle)*r));
           }
           const curve = new THREE.CatmullRomCurve3(points);
           const tube = new THREE.Mesh(
-              new THREE.TubeGeometry(curve, 20, 0.03 * scale, 4, false), 
+              new THREE.TubeGeometry(curve, loops, 0.035 * scale, 5, false), 
               wrapVineMat
           );
           parent.add(tube);
@@ -266,6 +268,11 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       pelvis.position.y = 1.8 * scale;
       group.add(pelvis);
       createVeins(pelvis, 3, {r: 0.35*scale, l: 0.3*scale});
+      
+      // Wrap Pelvis
+      const pelvisVine = new THREE.Group();
+      pelvis.add(pelvisVine);
+      wrapVine(pelvisVine, 0.5*scale, 0.38*scale, 2);
 
       // Spine & Ribcage
       const spineGroup = new THREE.Group();
@@ -303,6 +310,12 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       chest.position.set(0, 2.9 * scale, 0.15 * scale);
       chest.rotation.x = -0.2;
       group.add(chest);
+      
+      // Wrap Chest
+      const chestVine = new THREE.Group();
+      chestVine.rotation.x = 0.2; // Counter chest rotation for vertical wrap
+      chest.add(chestVine);
+      wrapVine(chestVine, 0.5*scale, 0.2*scale, 2);
 
       // Back Spikes
       const spikeGeo = new THREE.ConeGeometry(0.05 * scale, 0.3 * scale, 4);
@@ -313,7 +326,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
           group.add(spike);
       }
 
-      // --- Head (NO VINES) ---
+      // --- Head (NO VINES - EXPLICITLY EXCLUDED) ---
       const headGroup = new THREE.Group();
       headGroup.position.y = 3.5 * scale; 
       group.add(headGroup);
@@ -389,7 +402,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
           const vineAnchorUpper = new THREE.Group();
           vineAnchorUpper.position.y = -0.6 * scale;
           upperArmGroup.add(vineAnchorUpper);
-          wrapVine(vineAnchorUpper, 1.0 * scale, 0.1 * scale, 2.5);
+          wrapVine(vineAnchorUpper, 1.0 * scale, 0.1 * scale, 3);
 
           const bicep = new THREE.Mesh(new THREE.SphereGeometry(0.12*scale), skinMat);
           bicep.scale.y = 1.5;
@@ -420,7 +433,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
           const vineAnchorFore = new THREE.Group();
           vineAnchorFore.position.y = -0.75 * scale;
           elbowGroup.add(vineAnchorFore);
-          wrapVine(vineAnchorFore, 1.2 * scale, 0.08 * scale, 3);
+          wrapVine(vineAnchorFore, 1.2 * scale, 0.08 * scale, 4);
 
           const handGroup = new THREE.Group();
           handGroup.position.set(0, -1.5*scale, 0);
@@ -471,7 +484,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
          createVeins(thigh, 3, {r: 0.18*scale, l: 0.9*scale}); // Veins
          
          // Wrap Vine Thigh
-         wrapVine(thigh, 1.0 * scale, 0.16 * scale, 2);
+         wrapVine(thigh, 1.0 * scale, 0.16 * scale, 3);
 
          const quad = new THREE.Mesh(new THREE.SphereGeometry(0.16*scale), skinMat);
          quad.scale.y = 1.6;
@@ -488,7 +501,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
          createVeins(shin, 2, {r: 0.12*scale, l: 1*scale}); // Veins
          
          // Wrap Vine Shin
-         wrapVine(shin, 1.1 * scale, 0.11 * scale, 2.5);
+         wrapVine(shin, 1.1 * scale, 0.11 * scale, 3);
 
          const hock = new THREE.Mesh(new THREE.SphereGeometry(0.11*scale), skinMat);
          hock.position.y = -0.6*scale;
