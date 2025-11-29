@@ -57,7 +57,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
     window.addEventListener('scroll', initAudio);
 
 
-    // --- Lights (Enhanced for Visibility) ---
+    // --- Lights ---
     const ambientLight = new THREE.AmbientLight(0x4a5a6a, 2.5); 
     scene.add(ambientLight);
 
@@ -65,12 +65,64 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
     moonLight.position.set(10, 20, 10);
     scene.add(moonLight);
 
-    // Red flicker light (Mind Flayer lightning)
-    const redLight = new THREE.PointLight(0xff0033, 2, 100);
+    // Red flicker light (Mind Flayer lightning connection)
+    const redLight = new THREE.PointLight(0xff0033, 1, 100);
     redLight.position.set(0, 15, -10);
     scene.add(redLight);
 
-    // --- Procedural Mist / Fog Banks ---
+    // --- Mind Flayer Shadow Cloud & Thunder ---
+    const stormGroup = new THREE.Group();
+    stormGroup.position.set(0, 20, -80);
+    scene.add(stormGroup);
+
+    // Thunder Light (Hidden inside the cloud)
+    const thunderLight = new THREE.PointLight(0xff0033, 0, 300);
+    stormGroup.add(thunderLight);
+
+    // Cloud Texture
+    const cloudCanvas = document.createElement('canvas');
+    cloudCanvas.width = 128; cloudCanvas.height = 128;
+    const cCtx = cloudCanvas.getContext('2d');
+    if (cCtx) {
+        const g = cCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        g.addColorStop(0, 'rgba(20, 20, 25, 0.9)'); 
+        g.addColorStop(0.6, 'rgba(10, 10, 15, 0.4)'); 
+        g.addColorStop(1, 'rgba(0, 0, 0, 0)'); 
+        cCtx.fillStyle = g;
+        cCtx.fillRect(0, 0, 128, 128);
+    }
+    const cloudTexture = new THREE.CanvasTexture(cloudCanvas);
+    const cloudMat = new THREE.SpriteMaterial({ 
+        map: cloudTexture, 
+        transparent: true, 
+        opacity: 0.8,
+        color: 0x222222,
+        blending: THREE.NormalBlending 
+    });
+
+    const stormParticles: THREE.Sprite[] = [];
+    // Create massive cloud formation
+    for(let i=0; i<80; i++) {
+        const sprite = new THREE.Sprite(cloudMat.clone());
+        // Spider-like shape or just massive storm wall
+        const r = 40 + Math.random() * 30;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        
+        sprite.position.set(
+            (Math.random() - 0.5) * 120,
+            (Math.random() - 0.5) * 60,
+            (Math.random() - 0.5) * 40
+        );
+        const s = 40 + Math.random() * 40;
+        sprite.scale.set(s, s, 1);
+        sprite.material.rotation = Math.random() * Math.PI;
+        stormGroup.add(sprite);
+        stormParticles.push(sprite);
+    }
+
+
+    // --- Procedural Mist / Fog Banks (Foreground) ---
     const mistParticles: { sprite: THREE.Sprite, speedZ: number, swaySpeed: number, swayOffset: number }[] = [];
     const mistTextureCanvas = document.createElement('canvas');
     mistTextureCanvas.width = 128; 
@@ -155,7 +207,14 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
         roughness: 0.3
       });
 
-      // Helper to add procedural veins
+      // Wrapping Vine Material
+      const wrapVineMat = new THREE.MeshStandardMaterial({
+          color: 0x050505,
+          roughness: 1,
+          metalness: 0,
+      });
+
+      // Helper to add procedural surface veins
       const createVeins = (parent: THREE.Group | THREE.Mesh, count: number, size: {r: number, l: number}) => {
           for(let i=0; i<count; i++) {
              const curvePts = [];
@@ -181,6 +240,25 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
           }
       };
 
+      // Helper to wrap vines AROUND a limb (Constricting)
+      const wrapVine = (parent: THREE.Mesh | THREE.Group, length: number, radius: number, turns: number = 2) => {
+          const points = [];
+          const rBase = radius + 0.02 * scale; // Slightly larger than limb
+          for(let i=0; i<=20; i++) {
+              const t = i/20;
+              const angle = t * Math.PI * 2 * turns;
+              const y = (t - 0.5) * length;
+              const r = rBase + (Math.random()-0.5) * 0.02 * scale;
+              points.push(new THREE.Vector3(Math.cos(angle)*r, y, Math.sin(angle)*r));
+          }
+          const curve = new THREE.CatmullRomCurve3(points);
+          const tube = new THREE.Mesh(
+              new THREE.TubeGeometry(curve, 20, 0.03 * scale, 4, false), 
+              wrapVineMat
+          );
+          parent.add(tube);
+      };
+
       // --- Body Construction ---
 
       // Pelvis Area
@@ -201,6 +279,8 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       );
       spine.position.y = 0.5 * scale;
       spineGroup.add(spine);
+      // Wrap spine
+      wrapVine(spine, 1.2 * scale, 0.15 * scale, 3);
 
       // Ribs
       for(let i = 0; i < 4; i++) {
@@ -233,7 +313,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
           group.add(spike);
       }
 
-      // --- Head ---
+      // --- Head (NO VINES) ---
       const headGroup = new THREE.Group();
       headGroup.position.y = 3.5 * scale; 
       group.add(headGroup);
@@ -305,6 +385,12 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
           const upperArm = new THREE.Mesh(upperArmGeo, skinMat);
           createVeins(upperArm, 2, {r: 0.1*scale, l: 1*scale}); // Veins
           
+          // Wrap Vine on Upper Arm
+          const vineAnchorUpper = new THREE.Group();
+          vineAnchorUpper.position.y = -0.6 * scale;
+          upperArmGroup.add(vineAnchorUpper);
+          wrapVine(vineAnchorUpper, 1.0 * scale, 0.1 * scale, 2.5);
+
           const bicep = new THREE.Mesh(new THREE.SphereGeometry(0.12*scale), skinMat);
           bicep.scale.y = 1.5;
           bicep.position.set(0, -0.5*scale, 0.02*scale);
@@ -329,6 +415,12 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
           const forearm = new THREE.Mesh(forearmGeo, skinMat);
           createVeins(forearm, 2, {r: 0.09*scale, l: 1.2*scale}); // Veins
           elbowGroup.add(forearm);
+          
+          // Wrap Vine on Forearm
+          const vineAnchorFore = new THREE.Group();
+          vineAnchorFore.position.y = -0.75 * scale;
+          elbowGroup.add(vineAnchorFore);
+          wrapVine(vineAnchorFore, 1.2 * scale, 0.08 * scale, 3);
 
           const handGroup = new THREE.Group();
           handGroup.position.set(0, -1.5*scale, 0);
@@ -378,6 +470,9 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
          thigh.rotation.z = dir * -0.15; 
          createVeins(thigh, 3, {r: 0.18*scale, l: 0.9*scale}); // Veins
          
+         // Wrap Vine Thigh
+         wrapVine(thigh, 1.0 * scale, 0.16 * scale, 2);
+
          const quad = new THREE.Mesh(new THREE.SphereGeometry(0.16*scale), skinMat);
          quad.scale.y = 1.6;
          quad.position.set(0, -0.4*scale, 0.05*scale);
@@ -391,6 +486,9 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
          shin.position.set(0, -0.6*scale, 0.2*scale); 
          shin.rotation.x = 0.8; 
          createVeins(shin, 2, {r: 0.12*scale, l: 1*scale}); // Veins
+         
+         // Wrap Vine Shin
+         wrapVine(shin, 1.1 * scale, 0.11 * scale, 2.5);
 
          const hock = new THREE.Mesh(new THREE.SphereGeometry(0.11*scale), skinMat);
          hock.position.y = -0.6*scale;
@@ -513,6 +611,7 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
     // --- Animation Loop ---
     let frameId: number;
     const clock = new THREE.Clock();
+    let thunderTimer = 0;
 
     const animate = () => {
       const time = clock.getElapsedTime();
@@ -531,13 +630,30 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       }
       const stalkFactor = stalkFactorRef.current; // 0 to 1
 
-      // 1. Red Light Pulse
+      // 1. Red Light Pulse (Heartbeat)
       const heartbeat = (Math.exp(Math.sin(time * 3)) - 0.367) * 0.8 + 1; 
       const flicker = Math.random() > 0.9 ? Math.random() * 2 : 0;
       redLight.intensity = heartbeat + flicker;
       redLight.position.x = Math.sin(time) * 5;
 
-      // 2. Mist
+      // 1b. Thunder Logic
+      if (Math.random() < 0.005 && thunderTimer <= 0) {
+          thunderTimer = 20; // Frames of thunder
+      }
+      if (thunderTimer > 0) {
+          thunderLight.intensity = (Math.random() * 50) + 10;
+          thunderTimer--;
+      } else {
+          thunderLight.intensity = 0;
+      }
+
+      // 2. Storm & Mist Animation
+      stormGroup.rotation.y += 0.001;
+      stormGroup.rotation.z = Math.sin(time * 0.1) * 0.1;
+      stormParticles.forEach((p, idx) => {
+           p.material.rotation += 0.002 * (idx % 2 === 0 ? 1 : -1);
+      });
+
       mistParticles.forEach(p => {
           p.sprite.position.z += p.speedZ;
           p.sprite.position.x += Math.sin(time * p.swaySpeed + p.swayOffset) * 0.02;
@@ -700,6 +816,8 @@ export const Scene: React.FC<ScrollProps> = ({ scrollProgress }) => {
       vineMaterial.dispose();
       mistParticles.forEach(p => p.sprite.material.dispose());
       mistTexture.dispose();
+      cloudTexture.dispose();
+      cloudMat.dispose();
       demo1.group.clear();
       demo2.group.clear();
       bats.forEach(b => b.obj.group.clear());
